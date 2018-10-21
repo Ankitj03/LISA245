@@ -63,7 +63,7 @@ void GPIOinitOut(uint8_t portNum, uint32_t pinNum)
 	}
 	else
 	{
-		puts("Not a valid port!\n");
+		//puts("Not a valid port!\n");
 	}
 }
 
