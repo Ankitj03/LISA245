@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
-#include "lbc.h"
+
 
 #define START_BYTES 32
 #define DATA_BYTES  32
@@ -63,7 +63,7 @@ void GPIOinitOut(uint8_t portNum, uint32_t pinNum)
 	}
 	else
 	{
-		//puts("Not a valid port!\n");
+		puts("Not a valid port!\n");
 	}
 }
 
@@ -477,13 +477,12 @@ void lbc_decode(char *dest, int data_size, char *src)
 bool Tx()
 {
 	char txStr[32];
-	printf("Data to be transmitted = ");
+	printf("Message = ");
 	scanf("%s", &txStr);
 	getchar();
 	getchar();
 #ifdef AJ
-	printf("Start Tx Logic\n");
-	//char *txStr= "Abhishek011413311";
+	printf("Transmitting...\n");
 	front = -1;
     GPIOinitOut(TxRxPort, LED_Tx_pin);
     GPIOinitOut(TxRxPort, Tx_pin);
@@ -507,7 +506,7 @@ bool Tx()
    	printf("%d\n", len);
    	enqueueBinary(len);
    	enqueueBinary('A');
-   	enqueueBinary('D');
+   	//enqueueBinary('D');
    	addData(data);
 
 //   	// Scrambling
@@ -550,30 +549,30 @@ bool Tx()
    	delay(DELAY2);
    	printf("TX Done\n");
 
-   	printf("Start Rx Logic\n");
-   	while(1)
-	{
-		if (LPC_GPIO0->FIOPIN & (1 << Rx_pin)) //Wireless
-		{
-			queue[front] = 1;
-			setGPIO(TxRxPort, LED_Rx_pin);
-		}
-		else
-		{
-			queue[front] = 0;
-			clearGPIO(TxRxPort, LED_Rx_pin);
-		}
-
-		front++;
-		delay(DELAY1);
-		if(front == (BUFFER_SIZE - 1))
-		{
-			break;
-		}
-	}
-	rear = -1;
-	lookupPosition = -1;
-	extractData(data, 1); // Extract actual data from stream of data
+//   	printf("Start Rx Logic\n");
+//   	while(1)
+//	{
+//		if (LPC_GPIO0->FIOPIN & (1 << Rx_pin)) //Wireless
+//		{
+//			queue[front] = 1;
+//			setGPIO(TxRxPort, LED_Rx_pin);
+//		}
+//		else
+//		{
+//			queue[front] = 0;
+//			clearGPIO(TxRxPort, LED_Rx_pin);
+//		}
+//
+//		front++;
+//		delay(DELAY1);
+//		if(front == (BUFFER_SIZE - 1))
+//		{
+//			break;
+//		}
+//	}
+//	rear = -1;
+//	lookupPosition = -1;
+//	extractData(data, 1); // Extract actual data from stream of data
 
 //	// LBC decoding
 //   	if(check_error(rx_size*12, lbc_data))
@@ -597,21 +596,21 @@ bool Tx()
 //	memcpy(data, des_data, rx_size*8);
 
 
-	char *ptr;
-	int k = 0;
-	char *data_received = (char *)malloc(sizeof(char)*(rx_size - 2 + 1));
-	int z = 0;
-	printf("Rx: ");
-	for(ptr = (data + 16); k < ((rx_size - 2)*8); k+=8)
-	{
-		data_received[z++] = binaryToString(ptr);
-		ptr += 8;
-	}
-	data_received[z] = '\0';
-	printf("%s\n", data_received);
-	memset(queue, 0, BUFFER_SIZE);
-	clearGPIO(TxRxPort, LED_Rx_pin);
-	printf("Rx Done!\n");
+//	char *ptr;
+//	int k = 0;
+//	char *data_received = (char *)malloc(sizeof(char)*(rx_size - 2 + 1));
+//	int z = 0;
+//	printf("Rx: ");
+//	for(ptr = (data + 16); k < ((rx_size - 2)*8); k+=8)
+//	{
+//		data_received[z++] = binaryToString(ptr);
+//		ptr += 8;
+//	}
+//	data_received[z] = '\0';
+//	printf("%s\n", data_received);
+//	memset(queue, 0, BUFFER_SIZE);
+//	clearGPIO(TxRxPort, LED_Rx_pin);
+//	printf("Rx Done!\n");
 #else
 #endif
 	return true;
@@ -623,7 +622,7 @@ void Rx()
 	getchar();
 #ifdef AJ
 	// Rx Logic
-	printf("Start Rx Logic\n");
+	printf("Recieving...\n");
    	GPIOinitOut(TxRxPort, LED_Rx_pin);
     GPIOinitIn(TxRxPort, Rx_pin);
 	clearGPIO(TxRxPort, LED_Rx_pin);
@@ -689,7 +688,7 @@ void Rx()
 //	descramble_data(ORDER, des_data, data, rx_size*8);
 //	memcpy(data, des_data, rx_size*8);
 
-	printf("Rx: ");
+	printf("Recieved message: ");
 	char *ptr;
 	int k = 0;
 	char *data_received = (char *)malloc(sizeof(char)*(rx_size - 2 + 1));
@@ -701,36 +700,32 @@ void Rx()
 	}
 	data_received[z] = '\0';
 	printf("%s\n", data_received);
-	if(!strcmp(data_received, "ABHISH"))
-	{
-		printf("Plz Retransmit\n");
-		return;
-	}
+
 
 
 	// Tx Logic
-	printf("Start Tx Logic\n");
-	char *txStr= "Abhishek011413311";
-	printf("Tx: %s\n", txStr);
-	memset(queue, 0, BUFFER_SIZE);
-	memset(data, 0, DATA_BYTES*8);
-
-
-
-	clearGPIO(TxRxPort, LED_Rx_pin);
-    GPIOinitOut(TxRxPort, LED_Tx_pin);
-    GPIOinitOut(TxRxPort, Tx_pin);
-	clearGPIO(TxRxPort, LED_Tx_pin);
-
-	front = -1;
-    strcpy(data, txStr);
-   	addStartPattern();
-   	char len = (strlen(txStr) + 2);
-   	printf("%d\n", len);
-   	enqueueBinary(len);
-   	enqueueBinary('A');
-   	enqueueBinary('D');
-   	addData(data);
+//	printf("Start Tx Logic\n");
+//	char *txStr= "Abhishek011413311";
+//	printf("Tx: %s\n", txStr);
+//	memset(queue, 0, BUFFER_SIZE);
+//	memset(data, 0, DATA_BYTES*8);
+//
+//
+//
+//	clearGPIO(TxRxPort, LED_Rx_pin);
+//    GPIOinitOut(TxRxPort, LED_Tx_pin);
+//    GPIOinitOut(TxRxPort, Tx_pin);
+//	clearGPIO(TxRxPort, LED_Tx_pin);
+//
+//	front = -1;
+//    strcpy(data, txStr);
+//   	addStartPattern();
+//   	char len = (strlen(txStr) + 2);
+//   	printf("%d\n", len);
+//   	enqueueBinary(len);
+//   	enqueueBinary('A');
+//   	enqueueBinary('D');
+//   	addData(data);
 
    	// Scrambling
 //   	char s_data[1024];
@@ -744,25 +739,26 @@ void Rx()
 
    	//queue[270] = !queue[270]; //To introduce 1 bit error
 
-    int i = 0;
-    for(i = 0; i < (front + len*4); i++)
-   	{
-   		if(queue[i])
-   		{
-   			setGPIO(TxRxPort, LED_Tx_pin);
-   			setGPIO(TxRxPort, Tx_pin);
-   			delay(DELAY1);
-   		}
-   		else
-   		{
-   			clearGPIO(TxRxPort, LED_Tx_pin);
-   			clearGPIO(TxRxPort, Tx_pin);
-   			delay(DELAY1);
-   		}
-   	}
-	clearGPIO(TxRxPort, LED_Tx_pin);
-	clearGPIO(TxRxPort, Tx_pin);
-	printf("Tx Done!\n");
+//    int i = 0;
+//    for(i = 0; i < (front + len*4); i++)
+//   	{
+//   		if(queue[i])
+//   		{
+//   			setGPIO(TxRxPort, LED_Tx_pin);
+//   			setGPIO(TxRxPort, Tx_pin);
+//   			delay(DELAY1);
+//   		}
+//   		else
+//   		{
+//   			clearGPIO(TxRxPort, LED_Tx_pin);
+//   			clearGPIO(TxRxPort, Tx_pin);
+//   			delay(DELAY1);
+//   		}
+//   	}
+//	clearGPIO(TxRxPort, LED_Tx_pin);
+//	clearGPIO(TxRxPort, Tx_pin);
+//	printf("Tx Done!\n");
+//
 #else
 #endif
 }
