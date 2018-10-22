@@ -411,68 +411,7 @@ void descramble_data(int order, char *des_data, char *data, int data_size)
 	}
 }
 
-void lbc_encode(char *dest, int data_size, char *src)
-{
-    char G[8][12] = {G0, G1, G2, G3, G4, G5, G6, G7};
-    int k;
-    int z = 0;
-    for(k = 0; k < (data_size); k+=8)
-    {
-        int i, j;
-        for(i = 0; i < 12; i++)
-        {
-            for(j = 0; j < 8; j++)
-            {
-                dest[z + i] += (G[j][i]*src[k + j]);
-            }
-            dest[z + i] = (dest[z + i]%2);
-        }
-        z += 12;
-    }
-}
 
-bool check_error(int data_size, char *temp)
-{
-    char T[12][4] = {T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11};
-    char R[1024] = {0};
-
-    int k;
-    int z = 0;
-    for(k = 0; k < (data_size); k+=12)
-    {
-        int i, j;
-        for(i = 0; i < 4; i++)
-        {
-            for(j = 0; j < 12; j++)
-            {
-                R[z + i] += (T[j][i]*temp[k + j]);
-            }
-            R[z + i] = (R[z + i]%2);
-            if(R[z + i] == 1)
-            {
-            	//printf("i=%d z=%d k=%d\n",i, z, k);
-                return false;
-            }
-        }
-        z += 4;
-    }
-    return true;
-}
-
-void lbc_decode(char *dest, int data_size, char *src)
-{
-    int i = 0;
-    int k = 0;
-    for(i = 0; i < (data_size); i += 12)
-    {
-        int j = 0;
-        for(j = 0; j < 8; j++)
-        {
-            dest[j + k] = src[i + j];
-        }
-        k +=8;
-    }
-}
 
 bool Tx()
 {
