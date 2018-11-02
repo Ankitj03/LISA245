@@ -32,11 +32,11 @@
 
 #define AJ 1
 
-static char lookup[START_BYTES] ={ 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-                                  	  0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D,0x5E, 0x5F,
-									  0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
-									  0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF
-                                	};
+static char lookup[START_BYTES] ={0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9,
+				  0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF 0x50, 0x51, 0x52, 0x53,
+				  0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D,
+				  0x5E, 0x5F, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
+				  0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF};
 
 signed int front = -1;
 signed int rear = -1;
@@ -128,13 +128,6 @@ void clearGPIO(uint8_t portNum, uint32_t pinNum)
 		printf("Not Valid port to clear!\n");
 	}
 }
-
-// Generate delay at Tx/Rx side
-/*void delay(unsigned long int count)
-{
-    unsigned long int i;
-	for(i = 0; i < count; i++);
-}*/
 
 void delay(uint32_t count)
 {
@@ -448,17 +441,10 @@ bool Tx()
    	enqueueBinary('D');
    	addData(data);
 
-//   	// Scrambling
-//   	char s_data[1024];
-//   	scramble_data(ORDER, s_data, len*8);
-//   	memcpy(queue + 256 + 8, s_data, len*8);
-//
-//   	// LBC encoding
-//   	char lbc_data[2048] = {0};
-//   	lbc_encode(lbc_data, len*8, queue + 256 + 8);
-//   	memcpy(queue + 256 + 8, lbc_data, len*12);
-
-   	//queue[290] = !queue[290]; //To introduce 1 bit error
+   	// Scrambling
+   	char s_data[1024];
+   	scramble_data(ORDER, s_data, len*8);
+   	memcpy(queue + 256 + 8, s_data, len*8);
 
     int i = 0;
     for(i = 0; i < (front + len*4); i++)
@@ -479,7 +465,7 @@ bool Tx()
 	clearGPIO(TxRxPort, LED_Tx_pin);
 	clearGPIO(TxRxPort, Tx_pin);
    	GPIOinitOut(TxRxPort, LED_Rx_pin);
-    GPIOinitIn(TxRxPort, Rx_pin);
+    	GPIOinitIn(TxRxPort, Rx_pin);
 	clearGPIO(TxRxPort, LED_Rx_pin);
 
 	front = 0;
@@ -487,71 +473,6 @@ bool Tx()
    	memset(data, 0, DATA_BYTES*8);
    	delay(DELAY2);
    	printf("TX Done\n");
-
-   	printf("Start Rx Logic\n");
-   	while(1)
-	{
-		if (LPC_GPIO0->FIOPIN & (1 << Rx_pin)) //Wireless
-		{
-			queue[front] = 1;
-			setGPIO(TxRxPort, LED_Rx_pin);
-		}
-		else
-		{
-			queue[front] = 0;
-			clearGPIO(TxRxPort, LED_Rx_pin);
-		}
-
-		front++;
-		delay(DELAY1);
-		if(front == (BUFFER_SIZE - 1))
-		{
-			break;
-		}
-	}
-	rear = -1;
-	lookupPosition = -1;
-	extractData(data, 10); // Extract actual data from stream of data
-
-//	// LBC decoding
-//   	if(check_error(rx_size*12, lbc_data))
-//   	{
-//   		char lbc_received_data[1024] = {0};
-//   		lbc_decode(lbc_received_data, rx_size*12, data + 8);
-//   		memcpy(data, lbc_received_data, rx_size*8);
-//   	}
-//   	else
-//   	{
-//   		printf("Error!!\n");
-//   		char lbc_received_data[1024] = {0};
-//   		lbc_decode(lbc_received_data, rx_size*12, data + 8);
-//   		memcpy(data, lbc_received_data, rx_size*8);
-//   		//return false;
-//   	}
-//
-//	// Descrambling
-//	char des_data[1024];
-//	descramble_data(ORDER, des_data, data, rx_size*8);
-//	memcpy(data, des_data, rx_size*8);
-
-
-	char *ptr;
-	int k = 0;
-	char *data_received = (char *)malloc(sizeof(char)*(rx_size - 2 + 1));
-	int z = 0;
-	printf("Rx: ");
-	for(ptr = (data + 16); k < ((rx_size - 2)*8); k+=8)
-	{
-		data_received[z++] = binaryToString(ptr);
-		ptr += 8;
-	}
-	data_received[z] = '\0';
-	printf("%s\n", data_received);
-	memset(queue, 0, BUFFER_SIZE);
-	clearGPIO(TxRxPort, LED_Rx_pin);
-	printf("Rx Done!\n");
-#else
-#endif
 	return true;
 }
 
@@ -563,7 +484,7 @@ void Rx()
 	// Rx Logic
 	printf("Recieving...\n");
    	GPIOinitOut(TxRxPort, LED_Rx_pin);
-    GPIOinitIn(TxRxPort, Rx_pin);
+  	GPIOinitIn(TxRxPort, Rx_pin);
 	clearGPIO(TxRxPort, LED_Rx_pin);
 	if(queue == NULL)
 	{
@@ -606,26 +527,11 @@ void Rx()
 	lookupPosition = -1;
 	extractData(data, 10); // Extract actual data from stream of data
 
-	// LBC decoding
-//   	if(check_error(rx_size*12, data + 8))
-//   	{
-//   		char lbc_received_data[1024] = {0};
-//   		lbc_decode(lbc_received_data, rx_size*12, data + 8);
-//   		memcpy(data, lbc_received_data, rx_size*8);
-//   	}
-//   	else
-//   	{
-//   		printf("Error!!\n");
-//   		char lbc_received_data[1024] = {0};
-//   		lbc_decode(lbc_received_data, rx_size*12, data + 8);
-//   		memcpy(data, lbc_received_data, rx_size*8);
-//   		//return;
-//   	}
-//
+	
 //	// Descrambling
-//	char des_data[1024];
-//	descramble_data(ORDER, des_data, data, rx_size*8);
-//	memcpy(data, des_data, rx_size*8);
+	char des_data[1024];
+	descramble_data(ORDER, des_data, data, rx_size*8);
+	memcpy(data, des_data, rx_size*8);
 
 	printf("Recieved message: ");
 	char *ptr;
@@ -640,64 +546,6 @@ void Rx()
 	data_received[z] = '\0';
 	printf("%s\n", data_received);
 
-
-
-	 //Tx Logic
-	printf("Start Tx Logic\n");
-	char *txStr= "Test_message";
-	printf("Tx: %s\n", txStr);
-	memset(queue, 0, BUFFER_SIZE);
-	memset(data, 0, DATA_BYTES*8);
-
-
-
-	clearGPIO(TxRxPort, LED_Rx_pin);
-    GPIOinitOut(TxRxPort, LED_Tx_pin);
-    GPIOinitOut(TxRxPort, Tx_pin);
-	clearGPIO(TxRxPort, LED_Tx_pin);
-
-	front = -1;
-    strcpy(data, txStr);
-   	addStartPattern();
-   	char len = (strlen(txStr) + 2);
-   	printf("%d\n", len);
-   	enqueueBinary(len);
-   	enqueueBinary('A');
-   	enqueueBinary('D');
-   	addData(data);
-
-   	// Scrambling
-//   	char s_data[1024];
-//   	scramble_data(ORDER, s_data, len*8);
-//   	memcpy(queue + 256 + 8, s_data, len*8);
-//
-//   	// LBC encoding
-//   	char lbc_data[2048] = {0};
-//   	lbc_encode(lbc_data, len*8, queue + 256 + 8);
-//   	memcpy(queue + 256 + 8, lbc_data, len*12);
-
-   	//queue[270] = !queue[270]; //To introduce 1 bit error
-
-    int i = 0;
-    for(i = 0; i < (front + len*4); i++)
-   	{
-   		if(queue[i])
-   		{
-   			setGPIO(TxRxPort, LED_Tx_pin);
-   			setGPIO(TxRxPort, Tx_pin);
-   			delay(DELAY1);
-   		}
-   		else
-   		{
-   			clearGPIO(TxRxPort, LED_Tx_pin);
-   			clearGPIO(TxRxPort, Tx_pin);
-   			delay(DELAY1);
-   		}
-   	}
-	clearGPIO(TxRxPort, LED_Tx_pin);
-	clearGPIO(TxRxPort, Tx_pin);
-	printf("Tx Done!\n");
-
 #else
 #endif
 }
@@ -705,7 +553,7 @@ void Rx()
 
 int main(void)
 {
-	printf("Welcome to LISA!\n");
+	printf("My LISA!\n");
 	while(1)
 	{
 		printf("Select:\n1. Transmitter\n2. Receiver\n Your Choice = ");
